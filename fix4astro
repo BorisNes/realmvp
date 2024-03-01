@@ -1,0 +1,68 @@
+module smiley_move (	
+    input  logic clk,
+    input  logic resetN,
+    input  logic startOfFrame, //short pulse every start of frame 30Hz 
+    input  logic right_pressed,up_pressed,left_pressed,down_pressed, // input logic for movements 
+    input  logic collision, //collision if smiley hits an object
+    input  logic [3:0] HitEdgeCode, //one bit per edge
+
+    output logic signed [10:0] topLeftX, // output the top left corner 
+    output logic signed [10:0] topLeftY, // can be negative , if the object is partly outside 
+    output logic no_keys_pressed
+);
+
+// Existing parameter and variable declarations...
+// Add an enum to track the last direction of movement
+enum logic [2:0] {NO_MOVEMENT, MOVE_RIGHT, MOVE_UP, MOVE_LEFT, MOVE_DOWN} last_movement_direction;
+
+// Existing logic...
+
+always_ff @(posedge clk or negedge resetN) begin : fsm_sync_proc
+    if (resetN == 1'b0) begin
+        // Reset logic including last_movement_direction
+        last_movement_direction <= NO_MOVEMENT;
+        // Existing reset logic...
+    end else begin
+        // Existing state machine logic...
+
+        // Update the last_movement_direction based on the button presses
+        // Only update if a new button is pressed
+        if (right_pressed && last_movement_direction != MOVE_RIGHT) last_movement_direction <= MOVE_RIGHT;
+        else if (up_pressed && last_movement_direction != MOVE_UP) last_movement_direction <= MOVE_UP;
+        else if (left_pressed && last_movement_direction != MOVE_LEFT) last_movement_direction <= MOVE_LEFT;
+        else if (down_pressed && last_movement_direction != MOVE_DOWN) last_movement_direction <= MOVE_DOWN;
+        
+        // Movement logic based on last_movement_direction
+        // This logic goes inside the appropriate states (e.g., MOVE_ST)
+        case (last_movement_direction)
+            MOVE_RIGHT: begin
+                // Apply acceleration or maintain speed to the right, decelerate in Y direction
+                if (Xspeed < MAX_SPEED) Xspeed <= Xspeed + ACCEL;
+                Yspeed <= 0; // Stop vertical movement
+            end
+            MOVE_UP: begin
+                // Apply acceleration or maintain speed upwards, decelerate in X direction
+                if (Yspeed > -MAX_SPEED) Yspeed <= Yspeed - ACCEL;
+                Xspeed <= 0; // Stop horizontal movement
+            end
+            MOVE_LEFT: begin
+                // Apply acceleration or maintain speed to the left, decelerate in Y direction
+                if (Xspeed > -MAX_SPEED) Xspeed <= Xspeed - ACCEL;
+                Yspeed <= 0; // Stop vertical movement
+            end
+            MOVE_DOWN: begin
+                // Apply acceleration or maintain speed downwards, decelerate in X direction
+                if (Yspeed < MAX_SPEED) Yspeed <= Yspeed + ACCEL;
+                Xspeed <= 0; // Stop horizontal movement
+            end
+            default: begin
+                // No movement or deceleration logic if needed
+            end
+        endcase
+        // Existing state transitions and logic...
+    end
+end
+
+// Existing assignments and logic...
+
+endmodule
