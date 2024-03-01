@@ -1,0 +1,35 @@
+module objects_wrapper(
+    input logic clk,
+    input logic resetN,
+    input logic signed [10:0] pixelX,
+    input logic signed [10:0] pixelY,
+    output logic [4:0] drawingRequestBus, // For 5 objects
+    output logic [7:0] rgbDataBus [4:0],  // Array for 5 objects
+    output logic [7:0] RGBOut             // Final output RGB data
+);
+
+    // Instantiate your objects here
+    square_Hart_object obj1 (
+        .clk(clk),
+        .resetN(resetN),
+        .pixelX(pixelX),
+        .pixelY(pixelY),
+        .offsetX(), // If not used externally, no need to connect
+        .offsetY(), // If not used externally, no need to connect
+        .drawingRequest(drawingRequestBus[0]), // Connect to the first bit of drawingRequestBus
+        .RGBout(rgbDataBus[0]) // Connect to the first entry of rgbDataBus
+    );
+
+    // Additional object instantiations go here, connecting their outputs
+    // to the subsequent bits/entries of drawingRequestBus and rgbDataBus.
+
+    // Instantiate the objects_mux module
+    objects_mux mux (
+        .clk(clk),
+        .resetN(resetN),
+        .drawingRequestBus(drawingRequestBus),
+        .rgbDataBus(rgbDataBus),
+        .RGBOut(RGBOut)
+    );
+
+endmodule
