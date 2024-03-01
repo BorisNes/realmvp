@@ -1,0 +1,34 @@
+module objects_mux (
+    input logic clk,
+    input logic resetN,
+
+    // Combined inputs for drawing requests and RGB data
+    input logic [4:0] drawingRequestBus, // 5 objects, so 5-bit bus for drawing requests
+    input logic [7:0] rgbDataBus [4:0], // 5 objects, array of 5 8-bit buses for RGB data
+
+    output logic [7:0] RGBOut // Output RGB data
+);
+
+    // Priority encoding to find the highest-priority object that requests drawing
+    logic [2:0] highestPriorityIndex; // Log2(5) rounded up is 3, for indexing 5 objects
+
+    always_comb begin
+        // Default to lowest priority object if no requests are active
+        highestPriorityIndex = 0; 
+        for (int i = 4; i >= 0; i--) begin
+            if (drawingRequestBus[i]) begin
+                highestPriorityIndex = i;
+                break;
+            end
+        end
+    end
+
+    // Select the corresponding RGB data for the highest-priority drawing request
+    always_ff @(posedge clk or negedge resetN) begin
+        if (!resetN) begin
+            RGBOut <= 8'b0;
+        end else begin
+            RGBOut <= rgbDataBus[highestPriorityIndex];
+        end
+    end
+endmodule
